@@ -2,26 +2,26 @@
 -export([start/0, test/1]).
 
 start() ->
-	spawn(fun () -> server(4000) end).
+    spawn(fun() -> server(4000) end).
 
 server(Port) ->
-	{ok, Socket} = gen_udp:open(Port, [binary, {active, false}]),
-	io:format("Listening on ~p", [Port]),
-	listen(Socket).
+    {ok, Socket} = gen_udp:open(Port, [binary, {active, false}]),
+    io:format("server opened socket:~p~n",[Socket]),
+    listen(Socket).
 
 listen(Socket) ->
-	inet:setops(Socket, [{active, once}]) % ?
-	receive
-		{udp, Socket, Host, Port, Bin} ->
-			io:format("received ~p~n", [Bin]),
-			% convert to http here
-			listen(Socket)
-	end.
+    inet:setopts(Socket, [{active, once}]),
+    receive
+        {udp, Socket, _Host, _Port, Bin} ->
+            io:format("server received:~p~n",[Bin]),
+            %gen_udp:send(Socket, Host, Port, Bin),
+            listen(Socket)
+    end.
 
-test(Val) ->
-	{ok, Socket} = gen_udp:open(0, [binary]),
-	io:format("Testing ..."),
-	ok = gen_udp:send(Socket, "localhost", 4000, Val),
-	%Resp = receive end, % pas de receive car le serveur ne fait que transférer en HTTP
-	gen_udp:close(Socket),
-	Resp.
+% Client code
+test(N) ->
+    {ok, Socket} = gen_udp:open(0, [binary]),
+    io:format("test socket=~p~n",[Socket]),
+    ok = gen_udp:send(Socket, "localhost", 4000, N),
+    gen_udp:close(Socket),
+    ok.
